@@ -1,6 +1,6 @@
 import numpy as np
-from gym import spaces
-from stable_baselines.common.vec_env import VecEnv
+from gymnasium import spaces
+from stable_baselines3.common.vec_env import VecEnv
 
 
 class FlightEnvVec(VecEnv):
@@ -20,7 +20,7 @@ class FlightEnvVec(VecEnv):
         self._observation = np.zeros([self.num_envs, self.num_obs],
                                      dtype=np.float32)
         self._reward = np.zeros(self.num_envs, dtype=np.float32)
-        self._done = np.zeros((self.num_envs), dtype=np.bool)
+        self._done = np.zeros((self.num_envs), dtype=bool)
         self._extraInfoNames = self.wrapper.getExtraInfoNames()
         self._extraInfo = np.zeros([self.num_envs,
                                     len(self._extraInfoNames)], dtype=np.float32)
@@ -158,3 +158,15 @@ class FlightEnvVec(VecEnv):
         :return: (list) List of items returned by the environment's method call
         """
         raise RuntimeError('This method is not implemented')
+    
+    def env_is_wrapped(self, wrapper_class, indices):
+        """
+        Check if environments are wrapped with a given wrapper.
+
+        :param method_name: The name of the environment method to invoke.
+        :param indices: Indices of envs whose method to call
+        :param method_args: Any positional arguments to provide in the call
+        :param method_kwargs: Any keyword arguments to provide in the call
+        :return: True if the env is wrapped, False otherwise, for each env queried.
+        """
+        raise NotImplementedError()
