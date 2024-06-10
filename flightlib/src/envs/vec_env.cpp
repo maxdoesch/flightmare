@@ -149,7 +149,7 @@ void VecEnv<EnvBase>::perAgentStep(int agent_id, Ref<MatrixRowMajor<>> act,
     envs_[agent_id]->step(act.row(agent_id), obs.row(agent_id));
 
   Scalar terminal_reward = 0;
-  done(agent_id) = envs_[agent_id]->isTerminalState(terminal_reward);
+  done(agent_id) = envs_[agent_id]->isTerminalState(terminal_reward) || envs_[agent_id]->isTruncated();
 
   envs_[agent_id]->updateExtraInfo();
   for (int j = 0; j < extra_info.cols(); j++)

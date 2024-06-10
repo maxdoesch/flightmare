@@ -34,6 +34,7 @@ class EnvBase {
   virtual void render();
   virtual void updateExtraInfo();
   virtual bool isTerminalState(Scalar &reward);
+  virtual bool isTruncated();
 
   // auxilirary functions
   inline void setSeed(const int seed) { std::srand(seed); };

@@ -49,6 +49,10 @@ class FlightEnvVec(VecEnv):
                 eplen = len(self.rewards[i])
                 epinfo = {"r": eprew, "l": eplen}
                 info[i]['episode'] = epinfo
+                info[i]['terminal_observation'] = self._observation[i].copy()
+                if bool(info[i]['extra_info']['TimeLimit.truncated']):
+                    del info[i]['extra_info']['TimeLimit.truncated']
+                    info[i]['TimeLimit.truncated'] = True
                 self.rewards[i].clear()
 
         return self._observation.copy(), self._reward.copy(), \
@@ -159,7 +163,7 @@ class FlightEnvVec(VecEnv):
         """
         raise RuntimeError('This method is not implemented')
     
-    def env_is_wrapped(self, wrapper_class, indices):
+    def env_is_wrapped(self, wrapper_class, indices = None):
         """
         Check if environments are wrapped with a given wrapper.
 
@@ -169,4 +173,4 @@ class FlightEnvVec(VecEnv):
         :param method_kwargs: Any keyword arguments to provide in the call
         :return: True if the env is wrapped, False otherwise, for each env queried.
         """
-        raise NotImplementedError()
+        return [True]

@@ -39,6 +39,8 @@ QuadrotorEnv::QuadrotorEnv(const std::string &cfg_path)
   act_mean_ = Vector<quadenv::kNAct>::Ones() * (-mass * Gz) / 4;
   act_std_ = Vector<quadenv::kNAct>::Ones() * (-mass * 2 * Gz) / 4;
 
+  extra_info_.insert({"TimeLimit.truncated", false});
+
   // load parameters
   loadParam(cfg_);
 }
@@ -146,6 +148,16 @@ bool QuadrotorEnv::isTerminalState(Scalar &reward) {
   }
   reward = 0.0;
   return false;
+}
+
+bool QuadrotorEnv::isTruncated()
+{
+  return cmd_.t > max_t_;
+}
+
+void QuadrotorEnv::updateExtraInfo()
+{
+  extra_info_["TimeLimit.truncated"] = (float) isTruncated();
 }
 
 bool QuadrotorEnv::loadParam(const YAML::Node &cfg) {

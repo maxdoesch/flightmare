@@ -62,6 +62,8 @@ class QuadrotorEnv final : public EnvBase {
   // - auxiliar functions
   bool isTerminalState(Scalar &reward) override;
   void addObjectsToUnity(std::shared_ptr<UnityBridge> bridge);
+  void updateExtraInfo() override;
+  bool isTruncated() override;
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const QuadrotorEnv &quad_env);
@@ -91,6 +93,8 @@ class QuadrotorEnv final : public EnvBase {
 
   YAML::Node cfg_;
   Matrix<3, 2> world_box_;
+
+  bool is_truncated = false;
 };
 
 }  // namespace flightlib
