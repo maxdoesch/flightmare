@@ -50,9 +50,13 @@ class FlightEnvVec(VecEnv):
                 epinfo = {"r": eprew, "l": eplen}
                 info[i]['episode'] = epinfo
                 info[i]['terminal_observation'] = self._observation[i].copy()
-                if bool(info[i]['extra_info']['TimeLimit.truncated']):
-                    del info[i]['extra_info']['TimeLimit.truncated']
-                    info[i]['TimeLimit.truncated'] = True
+
+                info[i]['TimeLimit.truncated'] = bool(info[i]['extra_info']['TimeLimit.truncated'])
+                del info[i]['extra_info']['TimeLimit.truncated']
+
+                info[i]['is_success'] = bool(info[i]['extra_info']['is_success'])
+                del info[i]['extra_info']['is_success']
+
                 self.rewards[i].clear()
 
         return self._observation.copy(), self._reward.copy(), \

@@ -33,6 +33,9 @@ DroneRacingEnv::DroneRacingEnv(const std::string &cfg_path)
   act_std_ = Vector<droneracingenv::kNAct>::Ones() * (-mass * 2 * Gz) / 4;
 
   extra_info_.insert({"TimeLimit.truncated", false});
+  extra_info_.insert({"gate_idx", 0});
+  extra_info_.insert({"lap_cnt", 0});
+  extra_info_.insert({"is_success", false});
 
   // load parameters
   loadParam(cfg_);
@@ -144,7 +147,7 @@ Scalar DroneRacingEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {
 }
 
 bool DroneRacingEnv::isTerminalState(Scalar &reward) {
-  if (lap_cnt >= 3) {
+  if (lap_cnt >= laps_per_race) {
     reward = 10;
     return true;
   }
@@ -164,6 +167,9 @@ bool DroneRacingEnv::isTruncated()
 void DroneRacingEnv::updateExtraInfo()
 {
   extra_info_["TimeLimit.truncated"] = (float) isTruncated();
+  extra_info_["gate_idx"] = next_gate_idx;
+  extra_info_["lap_cnt"] = lap_cnt;
+  extra_info_["is_success"] = (float) (lap_cnt >= laps_per_race);
 }
 
 bool DroneRacingEnv::loadParam(const YAML::Node &cfg) {
