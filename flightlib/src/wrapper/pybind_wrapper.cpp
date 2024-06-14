@@ -7,6 +7,7 @@
 // flightlib
 #include "flightlib/envs/env_base.hpp"
 #include "flightlib/envs/quadrotor_env/quadrotor_env.hpp"
+#include "flightlib/envs/drone_racing_env/drone_racing_env.hpp"
 #include "flightlib/envs/test_env.hpp"
 #include "flightlib/envs/vec_env.hpp"
 
@@ -32,6 +33,27 @@ PYBIND11_MODULE(flightgym, m) {
     .def("getActDim", &VecEnv<QuadrotorEnv>::getActDim)
     .def("getExtraInfoNames", &VecEnv<QuadrotorEnv>::getExtraInfoNames)
     .def("__repr__", [](const VecEnv<QuadrotorEnv>& a) {
+      return "RPG Drone Racing Environment";
+    });
+
+  py::class_<VecEnv<DroneRacingEnv>>(m, "DroneRacingEnv_v1")
+    .def(py::init<>())
+    .def(py::init<const std::string&>())
+    .def(py::init<const std::string&, const bool>())
+    .def("reset", &VecEnv<DroneRacingEnv>::reset)
+    .def("step", &VecEnv<DroneRacingEnv>::step)
+    .def("testStep", &VecEnv<DroneRacingEnv>::testStep)
+    .def("setSeed", &VecEnv<DroneRacingEnv>::setSeed)
+    .def("close", &VecEnv<DroneRacingEnv>::close)
+    .def("isTerminalState", &VecEnv<DroneRacingEnv>::isTerminalState)
+    .def("curriculumUpdate", &VecEnv<DroneRacingEnv>::curriculumUpdate)
+    .def("connectUnity", &VecEnv<DroneRacingEnv>::connectUnity)
+    .def("disconnectUnity", &VecEnv<DroneRacingEnv>::disconnectUnity)
+    .def("getNumOfEnvs", &VecEnv<DroneRacingEnv>::getNumOfEnvs)
+    .def("getObsDim", &VecEnv<DroneRacingEnv>::getObsDim)
+    .def("getActDim", &VecEnv<DroneRacingEnv>::getActDim)
+    .def("getExtraInfoNames", &VecEnv<DroneRacingEnv>::getExtraInfoNames)
+    .def("__repr__", [](const VecEnv<DroneRacingEnv>& a) {
       return "RPG Drone Racing Environment";
     });
 

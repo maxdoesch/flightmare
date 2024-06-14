@@ -15,6 +15,7 @@
 #include "flightlib/common/types.hpp"
 #include "flightlib/envs/env_base.hpp"
 #include "flightlib/envs/quadrotor_env/quadrotor_env.hpp"
+#include "flightlib/envs/drone_racing_env/drone_racing_env.hpp"
 
 namespace flightlib {
 
