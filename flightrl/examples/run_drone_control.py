@@ -48,13 +48,13 @@ def main():
     cfg = YAML().load(open(os.environ["FLIGHTMARE_PATH"] +
                            "/flightlib/configs/vec_env.yaml", 'r'))
     if not args.train:
-        cfg["env"]["num_envs"] = 1
-        cfg["env"]["num_threads"] = 1
+        cfg["n_envs"] = 1
+        cfg["num_threads"] = 1
 
     if args.render:
-        cfg["env"]["render"] = "yes"
+        cfg["render"] = "yes"
     else:
-        cfg["env"]["render"] = "no"
+        cfg["render"] = "no"
 
     env = wrapper.FlightEnvVec(QuadrotorEnv_v1(
         dump(cfg, Dumper=RoundTripDumper), False))

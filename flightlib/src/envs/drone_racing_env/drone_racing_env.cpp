@@ -34,8 +34,6 @@ DroneRacingEnv::DroneRacingEnv(const std::string &cfg_path)
 
   extra_info_.insert({"TimeLimit.truncated", false});
 
-  std::cout << "Hello, Iam a race drone!" << std::endl;
-
   // load parameters
   loadParam(cfg_);
 }
@@ -129,8 +127,6 @@ Scalar DroneRacingEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {
       lap_cnt++;
     }
     next_gate_idx %= gates.size();
-    std::cout << next_gate_idx << std::endl;
-    std::cout << quad_state_.p << std::endl;
   }
 
   // update observations

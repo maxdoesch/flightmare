@@ -30,13 +30,13 @@ VecEnv<EnvBase>::VecEnv(const std::string& cfgs, const bool from_file) {
 template<typename EnvBase>
 void VecEnv<EnvBase>::init(void) {
   //
-  unity_render_ = cfg_["env"]["render"].as<bool>();
-  seed_ = cfg_["env"]["seed"].as<int>();
-  num_envs_ = cfg_["env"]["num_envs"].as<int>();
-  scene_id_ = cfg_["env"]["scene_id"].as<SceneID>();
+  unity_render_ = cfg_["render"].as<bool>();
+  seed_ = cfg_["seed"].as<int>();
+  num_envs_ = cfg_["n_envs"].as<int>();
+  scene_id_ = cfg_["scene_id"].as<SceneID>();
 
   // set threads
-  omp_set_num_threads(cfg_["env"]["num_threads"].as<int>());
+  omp_set_num_threads(cfg_["num_threads"].as<int>());
 
   // create & setup environments
   const bool render = false;
