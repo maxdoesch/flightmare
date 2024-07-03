@@ -61,6 +61,9 @@ class DroneRacingEnv final : public EnvBase {
   bool getAct(Ref<Vector<>> act) const;
   bool getAct(Command *const cmd) const;
   bool getGatePassed();
+  void get_state(Ref<Vector<>> state);
+
+  void set_initial_states(std::shared_ptr<MatrixRowMajor<>> initial_states);
 
   // - auxiliar functions
   bool isTerminalState(Scalar &reward) override;
@@ -93,6 +96,8 @@ class DroneRacingEnv final : public EnvBase {
 
   YAML::Node cfg_;
   Matrix<3, 2> world_box_;
+
+  std::shared_ptr<MatrixRowMajor<>> initial_states = NULL;
 
   std::vector<std::shared_ptr<RaceGate>> gates;
   int next_gate_idx = 0;

@@ -94,6 +94,16 @@ bool QuadrotorEnv::getObs(Ref<Vector<>> obs) {
   return true;
 }
 
+void QuadrotorEnv::get_state(Ref<Vector<>> state)
+{
+  //Not implemented
+}
+
+void QuadrotorEnv::set_initial_states(std::shared_ptr<MatrixRowMajor<>> initial_states)
+{
+  //Not implemented
+}
+
 Scalar QuadrotorEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {
   quad_act_ = act.cwiseProduct(act_std_) + act_mean_;
   cmd_.t += sim_dt_;

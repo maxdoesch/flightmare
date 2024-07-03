@@ -39,6 +39,9 @@ class VecEnv {
 
   // public set functions
   void setSeed(const int seed);
+  void set_initial_states(Ref<MatrixRowMajor<>> i_state);
+
+  void get_state(Ref<MatrixRowMajor<>> state);
 
   // public get functions
   void getObs(Ref<MatrixRowMajor<>> obs);
@@ -62,6 +65,7 @@ class VecEnv {
   inline bool getUnityRender(void) { return unity_render_; };
   inline int getObsDim(void) { return obs_dim_; };
   inline int getActDim(void) { return act_dim_; };
+  inline int getStateDim(void) { return state_dim_; };
   inline int getExtraInfoDim(void) { return extra_info_names_.size(); };
   inline int getNumOfEnvs(void) { return envs_.size(); };
   inline std::vector<std::string>& getExtraInfoNames() {
@@ -92,7 +96,7 @@ class VecEnv {
   uint16_t receive_id_{0};
 
   // auxiliar variables
-  int seed_, num_envs_, obs_dim_, act_dim_;
+  int seed_, num_envs_, obs_dim_, act_dim_, state_dim_;
   Matrix<> obs_dummy_;
 
   // yaml configurations

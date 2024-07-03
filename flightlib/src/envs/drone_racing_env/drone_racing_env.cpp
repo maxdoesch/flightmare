@@ -27,6 +27,7 @@ DroneRacingEnv::DroneRacingEnv(const std::string &cfg_path)
   // define input and output dimension for the environment
   obs_dim_ = droneracingenv::kNObs;
   act_dim_ = droneracingenv::kNAct;
+  state_dim_ = QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME + 2;
 
   Scalar mass = quadrotor_ptr_->getMass();
   act_mean_ = Vector<droneracingenv::kNAct>::Ones() * (-mass * Gz) / 4;
@@ -47,7 +48,22 @@ bool DroneRacingEnv::reset(Ref<Vector<>> obs, const bool random) {
   quad_state_.setZero();
   quad_act_.setZero();
 
-  if (random) {
+  next_gate_idx = 0;
+  lap_cnt = 0;
+
+  if (initial_states != NULL && uniform_dist_(random_gen_) > 0.2)
+  {
+    int idx = rand() % initial_states->rows();
+
+    quad_state_.p = initial_states->row(idx).segment<QuadState::NPOS>(QuadState::POS);
+    quad_state_.qx = initial_states->row(idx).segment<QuadState::NATT>(QuadState::ATT);
+    quad_state_.v = initial_states->row(idx).segment<QuadState::NVEL>(QuadState::VEL);
+    quad_state_.w = initial_states->row(idx).segment<QuadState::NOME>(QuadState::OME);
+
+    next_gate_idx = initial_states->row(idx)(QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME);
+    lap_cnt = initial_states->row(idx)(QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME + 1);
+  }
+  else if (random) {
     // randomly reset the quadrotor state
     // reset position
     quad_state_.x(QS::POSX) = uniform_dist_(random_gen_);
@@ -72,9 +88,6 @@ bool DroneRacingEnv::reset(Ref<Vector<>> obs, const bool random) {
   // reset control command
   cmd_.t = 0.0;
   cmd_.thrusts.setZero();
-
-  next_gate_idx = 0;
-  lap_cnt = 0;
 
   // obtain observations
   getObs(obs);
@@ -110,6 +123,22 @@ bool DroneRacingEnv::getGatePassed() {
   float gate_diagonal = (gate_corners.col(0) - gate_corners.col(2)).squaredNorm();
 
   return (normed_state_diff.array() < gate_diagonal).all();
+}
+
+void DroneRacingEnv::get_state(Ref<Vector<>> state) {
+  //state: pos, orientation, lin_vel, body_rate, next_gate_idx, lap_cnt
+  assert(state.size() == QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME + 2);
+
+  state.segment<QuadState::NPOS>(QuadState::POS) = quad_state_.p;
+  state.segment<QuadState::NATT>(QuadState::ATT) = quad_state_.qx;
+  state.segment<QuadState::NVEL>(QuadState::VEL) = quad_state_.v;
+  state.segment<QuadState::NOME>(QuadState::OME) = quad_state_.w;
+  state(QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME) = next_gate_idx;
+  state(QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME + 1) = lap_cnt;
+}
+
+void DroneRacingEnv::set_initial_states(std::shared_ptr<MatrixRowMajor<>> initial_states) {
+  this->initial_states = initial_states;
 }
 
 Scalar DroneRacingEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {

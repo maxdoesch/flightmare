@@ -40,6 +40,7 @@ class EnvBase {
   inline void setSeed(const int seed) { std::srand(seed); };
   inline int getObsDim() { return obs_dim_; };
   inline int getActDim() { return act_dim_; };
+  inline int getStateDim() { return state_dim_; };
   inline Scalar getSimTimeStep() { return sim_dt_; };
   inline int getExtraInfoDim() { return extra_info_.size(); };
   inline Scalar getMaxT() { return max_t_; };
@@ -51,6 +52,7 @@ class EnvBase {
   // observation and action dimenstions (for Reinforcement learning)
   int obs_dim_;
   int act_dim_;
+  int state_dim_;
 
   // control time step
   Scalar sim_dt_{0.02};

@@ -52,7 +52,10 @@ PYBIND11_MODULE(flightgym, m) {
     .def("getNumOfEnvs", &VecEnv<DroneRacingEnv>::getNumOfEnvs)
     .def("getObsDim", &VecEnv<DroneRacingEnv>::getObsDim)
     .def("getActDim", &VecEnv<DroneRacingEnv>::getActDim)
+    .def("getStateDim", &VecEnv<DroneRacingEnv>::getStateDim)
     .def("getExtraInfoNames", &VecEnv<DroneRacingEnv>::getExtraInfoNames)
+    .def("get_state", &VecEnv<DroneRacingEnv>::get_state)
+    .def("set_initial_states", &VecEnv<DroneRacingEnv>::set_initial_states)
     .def("__repr__", [](const VecEnv<DroneRacingEnv>& a) {
       return "RPG Drone Racing Environment";
     });

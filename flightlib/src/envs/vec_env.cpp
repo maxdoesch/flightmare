@@ -49,6 +49,7 @@ void VecEnv<EnvBase>::init(void) {
 
   obs_dim_ = envs_[0]->getObsDim();
   act_dim_ = envs_[0]->getActDim();
+  state_dim_ = envs_[0]->getStateDim();
 
   // generate reward names
   // compute it once to get reward names. actual value is not used
@@ -101,6 +102,23 @@ bool VecEnv<EnvBase>::step(Ref<MatrixRowMajor<>> act, Ref<MatrixRowMajor<>> obs,
     unity_bridge_ptr_->handleOutput();
   }
   return true;
+}
+
+template<typename EnvBase> 
+void VecEnv<EnvBase>::set_initial_states(Ref<MatrixRowMajor<>> i_state)
+{
+  std::shared_ptr<MatrixRowMajor<>> initial_states = std::make_shared<MatrixRowMajor<>>(i_state);
+
+  for(int i = 0; i < num_envs_; i++) {
+    envs_[i]->set_initial_states(initial_states);
+  }
+}
+
+template<typename EnvBase> 
+void VecEnv<EnvBase>::get_state(Ref<MatrixRowMajor<>> states) {
+  for(int i = 0; i < num_envs_; i++) {
+    envs_[i]->get_state(states.row(i));
+  }
 }
 
 template<typename EnvBase>
