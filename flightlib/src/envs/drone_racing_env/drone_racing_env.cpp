@@ -44,14 +44,16 @@ DroneRacingEnv::DroneRacingEnv(const std::string &cfg_path)
 
 DroneRacingEnv::~DroneRacingEnv() {}
 
-bool DroneRacingEnv::reset(Ref<Vector<>> obs, const bool random) {
+bool DroneRacingEnv::reset(Ref<Vector<>> obs, const bool train) {
   quad_state_.setZero();
   quad_act_.setZero();
 
   next_gate_idx = 0;
   lap_cnt = 0;
 
-  if (initial_states != NULL && uniform_dist_(random_gen_) > 0.2)
+  std::uniform_real_distribution<Scalar> uniform_dist{0, 1.0};
+
+  if (initial_states != NULL && uniform_dist(random_gen_) > 0.2)
   {
     int idx = rand() % initial_states->rows();
 
@@ -63,18 +65,47 @@ bool DroneRacingEnv::reset(Ref<Vector<>> obs, const bool random) {
     next_gate_idx = initial_states->row(idx)(QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME);
     lap_cnt = initial_states->row(idx)(QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME + 1);
   }
-  else if (random) {
+  /*
+  else if (train && uniform_dist(random_gen_) > 0.2) 
+  {
     // randomly reset the quadrotor state
     // reset position
-    quad_state_.x(QS::POSX) = uniform_dist_(random_gen_);
-    quad_state_.x(QS::POSY) = uniform_dist_(random_gen_);
-    quad_state_.x(QS::POSZ) = uniform_dist_(random_gen_) + 5;
+    next_gate_idx = int(uniform_dist(random_gen_) * gates.size());
+    float delta_x = gates[next_gate_idx]->getPosition()[0];
+    float delta_y = gates[next_gate_idx]->getPosition()[1];
+    float delta_z = gates[next_gate_idx]->getPosition()[2];
+
+    next_gate_idx = (next_gate_idx + 1) % gates.size();
+
+    quad_state_.x(QS::POSX) = norm_dist_(random_gen_) + delta_x;
+    quad_state_.x(QS::POSY) = norm_dist_(random_gen_) + delta_y;
+    quad_state_.x(QS::POSZ) = norm_dist_(random_gen_) + delta_z;
     if (quad_state_.x(QS::POSZ) < -0.0)
       quad_state_.x(QS::POSZ) = -quad_state_.x(QS::POSZ);
     // reset linear velocity
-    quad_state_.x(QS::VELX) = uniform_dist_(random_gen_);
-    quad_state_.x(QS::VELY) = uniform_dist_(random_gen_);
-    quad_state_.x(QS::VELZ) = uniform_dist_(random_gen_);
+    quad_state_.x(QS::VELX) = norm_dist_(random_gen_);
+    quad_state_.x(QS::VELY) = norm_dist_(random_gen_);
+    quad_state_.x(QS::VELZ) = norm_dist_(random_gen_);
+    // reset orientation
+    quad_state_.x(QS::ATTW) = uniform_dist_(random_gen_);
+    quad_state_.x(QS::ATTX) = uniform_dist_(random_gen_);
+    quad_state_.x(QS::ATTY) = uniform_dist_(random_gen_);
+    quad_state_.x(QS::ATTZ) = uniform_dist_(random_gen_);
+    quad_state_.qx /= quad_state_.qx.norm();
+  }*/
+  else 
+  {
+    // randomly reset the quadrotor state
+    // reset position
+    quad_state_.x(QS::POSX) = norm_dist_(random_gen_) - 10;
+    quad_state_.x(QS::POSY) = norm_dist_(random_gen_) - 10;
+    quad_state_.x(QS::POSZ) = norm_dist_(random_gen_) + 5;
+    if (quad_state_.x(QS::POSZ) < -0.0)
+      quad_state_.x(QS::POSZ) = -quad_state_.x(QS::POSZ);
+    // reset linear velocity
+    quad_state_.x(QS::VELX) = norm_dist_(random_gen_);
+    quad_state_.x(QS::VELY) = norm_dist_(random_gen_);
+    quad_state_.x(QS::VELZ) = norm_dist_(random_gen_);
     // reset orientation
     quad_state_.x(QS::ATTW) = uniform_dist_(random_gen_);
     quad_state_.x(QS::ATTX) = uniform_dist_(random_gen_);
@@ -161,7 +192,7 @@ Scalar DroneRacingEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {
     next_gate_idx %= gates.size();
   }
 
-  // update observations
+  // update observations and quad_state
   getObs(obs);
 
   // ---------------------- reward function design
@@ -181,7 +212,7 @@ bool DroneRacingEnv::isTerminalState(Scalar &reward) {
     return true;
   }
   else if (quad_state_.x(QS::POSZ) <= 0.02) {
-    reward = -10;
+    reward = crash_penalty_;
     return true;
   }
   reward = 0.0;
@@ -190,6 +221,9 @@ bool DroneRacingEnv::isTerminalState(Scalar &reward) {
 
 bool DroneRacingEnv::isTruncated()
 {
+  if(cmd_.t > max_t_)
+    std::cout << "--------------------" << std::endl;
+
   return cmd_.t > max_t_;
 }
 
@@ -198,7 +232,7 @@ void DroneRacingEnv::updateExtraInfo()
   extra_info_["TimeLimit.truncated"] = (float) isTruncated();
   extra_info_["gate_idx"] = next_gate_idx;
   extra_info_["lap_cnt"] = lap_cnt;
-  extra_info_["is_success"] = (float) (lap_cnt >= laps_per_race);
+  extra_info_["is_success"] = (float) (next_gate_idx > 1);
 }
 
 bool DroneRacingEnv::loadParam(const YAML::Node &cfg) {
@@ -212,6 +246,7 @@ bool DroneRacingEnv::loadParam(const YAML::Node &cfg) {
   if (cfg["rl"]) {
     // load reinforcement learning related parameters
     ang_vel_coeff_ = cfg["rl"]["ang_vel_coeff"].as<Scalar>();
+    crash_penalty_ = cfg["rl"]["crash_penalty"].as<Scalar>();
   } else {
     return false;
   }

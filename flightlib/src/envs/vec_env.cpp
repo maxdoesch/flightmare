@@ -34,6 +34,7 @@ void VecEnv<EnvBase>::init(void) {
   seed_ = cfg_["seed"].as<int>();
   num_envs_ = cfg_["n_envs"].as<int>();
   scene_id_ = cfg_["scene_id"].as<SceneID>();
+  train_ = cfg_["train"].as<bool>();
 
   // set threads
   omp_set_num_threads(cfg_["num_threads"].as<int>());
@@ -72,7 +73,7 @@ bool VecEnv<EnvBase>::reset(Ref<MatrixRowMajor<>> obs) {
 
   receive_id_ = 0;
   for (int i = 0; i < num_envs_; i++) {
-    envs_[i]->reset(obs.row(i));
+    envs_[i]->reset(obs.row(i), train_);
   }
   return true;
 }
@@ -175,7 +176,7 @@ void VecEnv<EnvBase>::perAgentStep(int agent_id, Ref<MatrixRowMajor<>> act,
       envs_[agent_id]->extra_info_[extra_info_names_[j]];
 
   if (done[agent_id]) {
-    envs_[agent_id]->reset(obs.row(agent_id));
+    envs_[agent_id]->reset(obs.row(agent_id), train_);
     reward(agent_id) += terminal_reward;
   }
 }

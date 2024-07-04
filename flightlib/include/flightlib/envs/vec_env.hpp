@@ -94,6 +94,7 @@ class VecEnv {
   bool unity_render_{false};
   RenderMessage_t unity_output_;
   uint16_t receive_id_{0};
+  bool train_{true};
 
   // auxiliar variables
   int seed_, num_envs_, obs_dim_, act_dim_, state_dim_;

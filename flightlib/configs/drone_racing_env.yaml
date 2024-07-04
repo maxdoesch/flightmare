@@ -16,6 +16,7 @@ quadrotor_dynamics:
 
 rl:
   ang_vel_coeff: 0.01  # reward coefficient for control actions
+  crash_penalty: -10
 
 race_track:
   gate_1: [-10, 0, 2.5, 0] #x, y, z, alpha

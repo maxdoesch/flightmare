@@ -1,6 +1,7 @@
 import numpy as np
 from gymnasium import spaces
 from stable_baselines3.common.vec_env import VecEnv
+from copy import deepcopy
 
 
 class FlightEnvVec(VecEnv):
@@ -9,6 +10,7 @@ class FlightEnvVec(VecEnv):
         self.wrapper = impl
         self.num_obs = self.wrapper.getObsDim()
         self.num_acts = self.wrapper.getActDim()
+        self.state_dim = self.wrapper.getStateDim()
         print(self.num_obs, self.num_acts)
         self._observation_space = spaces.Box(
             np.ones(self.num_obs) * -np.Inf,
@@ -17,6 +19,8 @@ class FlightEnvVec(VecEnv):
             low=np.ones(self.num_acts) * -1.,
             high=np.ones(self.num_acts) * 1.,
             dtype=np.float32)
+        
+        self._state = np.zeros([self.num_envs, self.state_dim], dtype=np.float32)
         self._observation = np.zeros([self.num_envs, self.num_obs],
                                      dtype=np.float32)
         self._reward = np.zeros(self.num_envs, dtype=np.float32)
@@ -165,7 +169,13 @@ class FlightEnvVec(VecEnv):
         :param method_kwargs: (dict) Any keyword arguments to provide in the call
         :return: (list) List of items returned by the environment's method call
         """
-        raise RuntimeError('This method is not implemented')
+        if method_name == "get_state":
+            self.wrapper.get_state(self._state)
+            return deepcopy(self._state)
+        elif method_name == "set_initial_states":
+            initial_states = np.vstack(method_args)
+            self.wrapper.set_initial_states(initial_states)
+            return
     
     def env_is_wrapped(self, wrapper_class, indices = None):
         """

@@ -50,7 +50,7 @@ class DroneRacingEnv final : public EnvBase {
   ~DroneRacingEnv();
 
   // - public OpenAI-gym-style functions
-  bool reset(Ref<Vector<>> obs, const bool random = true) override;
+  bool reset(Ref<Vector<>> obs, const bool train = true) override;
   Scalar step(const Ref<Vector<>> act, Ref<Vector<>> obs) override;
 
   // - public set functions
@@ -82,7 +82,7 @@ class DroneRacingEnv final : public EnvBase {
   Logger logger_{"DroneRacingEnv"};
 
   // Define reward for training
-  Scalar ang_vel_coeff_;
+  Scalar ang_vel_coeff_, crash_penalty_;
 
   // observations and actions (for RL)
   Vector<droneracingenv::kNObs> quad_obs_;
@@ -103,7 +103,7 @@ class DroneRacingEnv final : public EnvBase {
   int next_gate_idx = 0;
   int lap_cnt = 0;
 
-  const int laps_per_race = 1; 
+  const int laps_per_race = 3; 
 
   bool is_truncated = false;
 };
