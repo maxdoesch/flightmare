@@ -29,9 +29,15 @@ DroneRacingEnv::DroneRacingEnv(const std::string &cfg_path)
   act_dim_ = droneracingenv::kNAct;
   state_dim_ = QuadState::NPOS + QuadState::NATT + QuadState::NVEL + QuadState::NOME + 2;
 
-  Scalar mass = quadrotor_ptr_->getMass();
-  act_mean_ = Vector<droneracingenv::kNAct>::Ones() * (-mass * Gz) / 4;
-  act_std_ = Vector<droneracingenv::kNAct>::Ones() * (-mass * 2 * Gz) / 4;
+  //Scalar mass = quadrotor_ptr_->getMass();
+  //act_mean_ = Vector<droneracingenv::kNAct>::Ones() * (-mass * Gz) / 4;
+  //act_std_ = Vector<droneracingenv::kNAct>::Ones() * (-mass * 2 * Gz) / 4;
+
+  Scalar max_force = quadrotor_ptr_->getDynamics().getForceMax();
+  Vector<3> max_omega = quadrotor_ptr_->getDynamics().getOmegaMax();
+  //
+  act_mean_ << (max_force / quadrotor_ptr_->getMass()) / 2, 0.0, 0.0, 0.0;
+  act_std_ << (max_force / quadrotor_ptr_->getMass()) / 2, max_omega.x(), max_omega.y(), max_omega.z();
 
   extra_info_.insert({"TimeLimit.truncated", false});
   extra_info_.insert({"gate_idx", 0});
@@ -118,7 +124,9 @@ bool DroneRacingEnv::reset(Ref<Vector<>> obs, const bool train) {
 
   // reset control command
   cmd_.t = 0.0;
-  cmd_.thrusts.setZero();
+  //cmd_.thrusts.setZero();
+  cmd_.collective_thrust = 0;
+  cmd_.omega.setZero();
 
   // obtain observations
   getObs(obs);
@@ -144,17 +152,69 @@ bool DroneRacingEnv::getObs(Ref<Vector<>> obs) {
   return true;
 }
 
+//bool DroneRacingEnv::getGatePassed() {
+//  quadrotor_ptr_->getState(&quad_state_);
+//
+//  Eigen::Matrix<float, 3, 4> gate_corners = gates[next_gate_idx]->getCorners();
+//  Eigen::Matrix<float, 3, 4> state_diff = gate_corners.colwise() - quad_state_.p;
+//  Eigen::Matrix<float, 1, 4> normed_state_diff = state_diff.colwise().norm();
+//
+//  float gate_diagonal = (gate_corners.col(0) - gate_corners.col(2)).norm();
+//
+//  return (normed_state_diff.array() < gate_diagonal).all();
+//}
+
 bool DroneRacingEnv::getGatePassed() {
-  quadrotor_ptr_->getState(&quad_state_);
+    quadrotor_ptr_->getState(&quad_state_);
 
-  Eigen::Matrix<float, 3, 4> gate_corners = gates[next_gate_idx]->getCorners();
-  Eigen::Matrix<float, 3, 4> state_diff = gate_corners.colwise() - quad_state_.p;
-  Eigen::Matrix<float, 1, 4> normed_state_diff = state_diff.colwise().squaredNorm();
+    // Retrieve the gate corners (assumed to be in a specific order)
+    Eigen::Matrix<float, 3, 4> gate_corners = gates[next_gate_idx]->getCorners();
 
-  float gate_diagonal = (gate_corners.col(0) - gate_corners.col(2)).squaredNorm();
+    // Define the corners of the gate
+    Eigen::Vector3f p1 = gate_corners.col(0);
+    Eigen::Vector3f p2 = gate_corners.col(1);
+    Eigen::Vector3f p3 = gate_corners.col(2);
+    Eigen::Vector3f p4 = gate_corners.col(3);
 
-  return (normed_state_diff.array() < gate_diagonal).all();
+    // Compute gate plane normal
+    Eigen::Vector3f gate_normal = (p2 - p1).cross(p4 - p1).normalized();
+
+    // Get the drone position
+    Eigen::Vector3f drone_pos = quad_state_.p;
+
+    // Check if the drone is within the plane of the gate
+    float distance_to_plane = gate_normal.dot(drone_pos - p1);
+    if (std::abs(distance_to_plane) > 0.3) {
+        return false;
+    }
+
+    // Project the drone position onto the gate's plane
+    Eigen::Vector3f projected_pos = drone_pos - distance_to_plane * gate_normal;
+
+    // Compute vectors for gate edges
+    Eigen::Vector3f edge1 = p2 - p1;
+    Eigen::Vector3f edge2 = p4 - p1;
+
+    // Check if the projected position is within the bounds of the gate using barycentric coordinates
+    Eigen::Vector3f v0 = edge1;
+    Eigen::Vector3f v1 = edge2;
+    Eigen::Vector3f v2 = projected_pos - p1;
+
+    float d00 = v0.dot(v0);
+    float d01 = v0.dot(v1);
+    float d11 = v1.dot(v1);
+    float d20 = v2.dot(v0);
+    float d21 = v2.dot(v1);
+
+    float denom = d00 * d11 - d01 * d01;
+    float v = (d11 * d20 - d01 * d21) / denom;
+    float w = (d00 * d21 - d01 * d20) / denom;
+    float u = 1.0f - v - w;
+
+    // The drone is within the gate if all barycentric coordinates are between 0 and 1
+    return (u >= 0 && u <= 1 && v >= 0 && v <= 1 && w >= 0 && w <= 1);
 }
+
 
 void DroneRacingEnv::get_state(Ref<Vector<>> state) {
   //state: pos, orientation, lin_vel, body_rate, next_gate_idx, lap_cnt
@@ -175,7 +235,9 @@ void DroneRacingEnv::set_initial_states(std::shared_ptr<MatrixRowMajor<>> initia
 Scalar DroneRacingEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {
   quad_act_ = act.cwiseProduct(act_std_) + act_mean_;
   cmd_.t += sim_dt_;
-  cmd_.thrusts = quad_act_;
+  //cmd_.thrusts = quad_act_;
+  cmd_.collective_thrust = quad_act_(0);
+  cmd_.omega = quad_act_.segment<3>(1);
 
   Eigen::Vector3f prev_quad_position = quad_state_.p;
 
@@ -196,8 +258,8 @@ Scalar DroneRacingEnv::step(const Ref<Vector<>> act, Ref<Vector<>> obs) {
   getObs(obs);
 
   // ---------------------- reward function design
-  Scalar gate_reward = (gates[next_gate_idx]->getPosition() - prev_quad_position).squaredNorm() - 
-    (gates[next_gate_idx]->getPosition() - quad_state_.p).squaredNorm();
+  Scalar gate_reward = (gates[next_gate_idx]->getPosition() - prev_quad_position).norm() - 
+    (gates[next_gate_idx]->getPosition() - quad_state_.p).norm();
 
   Scalar act_reward = -ang_vel_coeff_ * quad_state_.w.cast<Scalar>().norm();
 
@@ -232,7 +294,7 @@ void DroneRacingEnv::updateExtraInfo()
   extra_info_["TimeLimit.truncated"] = (float) isTruncated();
   extra_info_["gate_idx"] = next_gate_idx;
   extra_info_["lap_cnt"] = lap_cnt;
-  extra_info_["is_success"] = (float) (next_gate_idx > 1);
+  extra_info_["is_success"] = (float) (lap_cnt >= laps_per_race);
 }
 
 bool DroneRacingEnv::loadParam(const YAML::Node &cfg) {

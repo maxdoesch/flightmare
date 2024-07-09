@@ -178,6 +178,8 @@ bool QuadrotorDynamics::updateParams(const YAML::Node& params) {
       params["quadrotor_dynamics"]["omega_max"].as<std::vector<Scalar>>();
     omega_max_ = Map<Vector<3>>(omega_max.data());
 
+    force_torque_max_(0) = thrust_max_ * 4;
+
     // update relevant variables
     updateInertiaMarix();
     return valid();

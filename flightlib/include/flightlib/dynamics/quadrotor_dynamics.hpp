@@ -51,6 +51,9 @@ class QuadrotorDynamics : DynamicsBase {
   inline Matrix<3, 3> getJ(void) const { return J_; };
   inline Matrix<3, 3> getJInv(void) const { return J_inv_; };
 
+  inline Scalar getForceMax(void) const { return force_torque_max_(0); };
+  inline Vector<3> getOmegaMax(void) const { return omega_max_; };
+
   bool setMass(const Scalar mass);
   bool setArmLength(const Scalar arm_length);
   bool setMotortauInv(const Scalar tau_inv);
@@ -76,6 +79,8 @@ class QuadrotorDynamics : DynamicsBase {
   Scalar kappa_;
   Scalar thrust_min_;
   Scalar thrust_max_;
+
+  Vector<4> force_torque_max_;
 
   // Quadrotor limits
   Vector<3> omega_max_;

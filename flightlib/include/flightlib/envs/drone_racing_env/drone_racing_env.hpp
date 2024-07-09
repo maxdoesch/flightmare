@@ -103,7 +103,7 @@ class DroneRacingEnv final : public EnvBase {
   int next_gate_idx = 0;
   int lap_cnt = 0;
 
-  const int laps_per_race = 3; 
+  const int laps_per_race = 1; 
 
   bool is_truncated = false;
 };
