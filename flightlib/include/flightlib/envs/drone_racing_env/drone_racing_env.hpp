@@ -61,6 +61,7 @@ class DroneRacingEnv final : public EnvBase {
   bool getAct(Ref<Vector<>> act) const;
   bool getAct(Command *const cmd) const;
   bool getGatePassed();
+  bool checkGateCollision();
   void get_state(Ref<Vector<>> state);
 
   void set_initial_states(std::shared_ptr<MatrixRowMajor<>> initial_states);
@@ -103,7 +104,7 @@ class DroneRacingEnv final : public EnvBase {
   int next_gate_idx = 0;
   int lap_cnt = 0;
 
-  const int laps_per_race = 1; 
+  const int laps_per_race = 3; 
 
   bool is_truncated = false;
 };
